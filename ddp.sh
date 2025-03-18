@@ -7,7 +7,6 @@ cfg_scale=1.5
 num_sampling_steps=50
 fresh_ratio=0.07
 ratio_scheduler="ToCa-ddim50"
-force_fresh="global"
 interval=4
 max_order=4
 soft_fresh_weight=0.25

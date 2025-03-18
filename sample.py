@@ -75,6 +75,7 @@ def main(args, args_exp):
     model_kwargs['fresh_ratio']       = args.fresh_ratio
     model_kwargs['ratio_scheduler']   = args.ratio_scheduler
     model_kwargs['soft_fresh_weight'] = args.soft_fresh_weight
+    model_kwargs['exp'] = {}
     for k, v in args_exp.__dict__.items():
         model_kwargs['exp'][k] = v
 
@@ -98,7 +99,7 @@ def main(args, args_exp):
     samples = vae.decode(samples / 0.18215).sample
 
     # Save and display images:
-    save_image(samples, "sample.png", nrow=4, normalize=True, value_range=(-1, 1))
+    save_image(samples, "sample_with_toca.png", nrow=4, normalize=True, value_range=(-1, 1))
 
 
 if __name__ == "__main__":
