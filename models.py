@@ -157,9 +157,6 @@ class DiTBlock(nn.Module):
             derivative_approximation(cache_dic, current, mlp_output)
             x = x + gate_mlp.unsqueeze(1) * mlp_output
 
-            if current['layer'] == 27:
-                get_cluster_info(x, cache_dic, current)
-
             # MLP FLOPs
             if test_FLOPs:
                 mlp_hidden_dim = int(C * 4)  # Assuming mlp_ratio = 4
@@ -204,10 +201,7 @@ class DiTBlock(nn.Module):
             fresh_indices, fresh_tokens = cache_cutfresh(cache_dic, x, current)
             fresh_tokens = self.mlp(modulate(self.norm2(fresh_tokens), shift_mlp, scale_mlp))
 
-            if cache_dic['smooth_rate'] > 0.0:
-                smooth_update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
-            else:
-                update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
             
             x = x + gate_mlp.unsqueeze(1) * taylor_formula(cache_dic, current)
             
