@@ -18,7 +18,7 @@ from models import DiT_models
 import argparse
 
 
-def main(args):
+def main(args, args_exp):
     # Setup PyTorch:
     torch.manual_seed(args.seed)
     torch.set_grad_enabled(False)
@@ -75,6 +75,8 @@ def main(args):
     model_kwargs['fresh_ratio']       = args.fresh_ratio
     model_kwargs['ratio_scheduler']   = args.ratio_scheduler
     model_kwargs['soft_fresh_weight'] = args.soft_fresh_weight
+    for k, v in args_exp.__dict__.items():
+        model_kwargs['exp'][k] = v
 
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
@@ -120,5 +122,15 @@ if __name__ == "__main__":
     parser.add_argument("--soft-fresh-weight", type=float, default=0.25, # lambda_3 in the paper
                         help="soft weight for updating the stale tokens by adding extra scores.")
 
-    args = parser.parse_args()
-    main(args)
+    # args = parser.parse_args()
+    parser_exp = argparse.ArgumentParser()
+    parser_exp.add_argument("--cluster-nums", type=int, default=16)
+    parser_exp.add_argument("--cluster-method", type=str, choices=['kmeans', 'random'], default='kmeans')
+    parser_exp.add_argument("--use-cluster-scheduler", action="store_true", default=False)
+    parser_exp.add_argument("--smooth-rate", type=float, default=0.0)
+    parser_exp.add_argument("--topk", type=int, default=1)
+    parser_exp.add_argument("--fixed-fresh-threshold", action="store_true", default=False)
+
+    args, remaining_args = parser.parse_known_args()
+    args_exp = parser_exp.parse_args(remaining_args)
+    main(args, args_exp)

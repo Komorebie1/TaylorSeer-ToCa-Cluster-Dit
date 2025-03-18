@@ -2,6 +2,7 @@ from .fresh_ratio_scheduler import fresh_ratio_scheduler
 from .score_evaluate import score_evaluate
 #from .token_merge import token_merge
 import torch
+from .select_fresh_tokens import select_fresh_indices_randomly, select_one_fresh_index_per_cluster
 def cache_cutfresh(cache_dic, tokens, current):
     '''
     Cut fresh tokens from the input tokens and update the cache counter.
@@ -14,27 +15,24 @@ def cache_cutfresh(cache_dic, tokens, current):
     layer = current['layer']
     module = current['module']
     
-    fresh_ratio = fresh_ratio_scheduler(cache_dic, current)
-    fresh_ratio = torch.clamp(torch.tensor(fresh_ratio), 0.0, 1.0)
-    # Generate the index tensor for fresh tokens
-    score = score_evaluate(cache_dic, tokens, current)
-    score = local_selection_with_bonus(score, 0.8, 2) # Uniform Spatial Distribution s4 mentioned in toca
-    # 0.6, 2
-    indices = score.argsort(dim=-1, descending=True)
-    topk = int(fresh_ratio * score.shape[1])
-    fresh_indices = indices[:, :topk]
-    #stale_indices = indices[:, topk:]
-    # (B, fresh_ratio *N)
+    # fresh_ratio = fresh_ratio_scheduler(cache_dic, current)
+    # fresh_ratio = torch.clamp(torch.tensor(fresh_ratio), 0.0, 1.0)
+    # score = score_evaluate(cache_dic, tokens, current)
+    # score = local_selection_with_bonus(score, 0.8, 2) # Uniform Spatial Distribution s4 mentioned in toca
+    # indices = score.argsort(dim=-1, descending=True)
+    # topk = int(fresh_ratio * score.shape[1])
+    # fresh_indices = indices[:, :topk]
 
-    # Updating the Cache Frequency Score s3 mentioned in toca
-    # stale tokens index + 1, fresh tokens index = 0
-    cache_dic['cache_index'][-1][layer][module] += 1
-    cache_dic['cache_index'][-1][layer][module].scatter_(dim=1, index=fresh_indices, 
-                                                                    src = torch.zeros_like(fresh_indices, dtype=torch.int, device=fresh_indices.device))
+    # # Updating the Cache Frequency Score s3 mentioned in toca
+    # # stale tokens index + 1, fresh tokens index = 0
+    # cache_dic['cache_index'][-1][layer][module] += 1
+    # cache_dic['cache_index'][-1][layer][module].scatter_(dim=1, index=fresh_indices, 
+    #                                                                 src = torch.zeros_like(fresh_indices, dtype=torch.int, device=fresh_indices.device))
     
+    fresh_indices = select_one_fresh_index_per_cluster(cache_dic, current)
+
     # select the fresh tokens out
     fresh_indices_expand = fresh_indices.unsqueeze(-1).expand(-1, -1, tokens.shape[-1])
-
     if module in ['mlp', 'attn']:
         # cut out the fresh tokens
         fresh_tokens = torch.gather(input = tokens, dim = 1, index = fresh_indices_expand)

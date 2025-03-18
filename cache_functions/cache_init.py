@@ -42,5 +42,10 @@ def cache_init(model_kwargs, num_steps):
     current = {}
     current['num_steps'] = num_steps
     current['activated_steps'] = [49]
+
+    for k, v in model_kwargs['exp'].items():
+        cache_dic[k] = v
+    cache_dic['cluster_info'] = {}
+
     return cache_dic, current
     

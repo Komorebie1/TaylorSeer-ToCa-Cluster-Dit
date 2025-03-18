@@ -16,8 +16,9 @@ import math
 #from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
 from timm.models.vision_transformer import PatchEmbed, Mlp
 #import os.path as osp
-from cache_functions import Attention, cal_type, cache_cutfresh, update_cache, force_init
+from cache_functions import Attention, cal_type, cache_cutfresh, update_cache, smooth_update_cache, force_init
 from taylor_utils import derivative_approximation, taylor_formula, taylor_cache_init
+from cluster_utils import get_cluster_info
 
 def modulate(x, shift, scale):
     return x * (1 + scale.unsqueeze(1)) + shift.unsqueeze(1)
@@ -156,6 +157,9 @@ class DiTBlock(nn.Module):
             derivative_approximation(cache_dic, current, mlp_output)
             x = x + gate_mlp.unsqueeze(1) * mlp_output
 
+            if current['layer'] == 27:
+                get_cluster_info(x, cache_dic, current)
+
             # MLP FLOPs
             if test_FLOPs:
                 mlp_hidden_dim = int(C * 4)  # Assuming mlp_ratio = 4
@@ -199,7 +203,11 @@ class DiTBlock(nn.Module):
             current['module'] = 'mlp'
             fresh_indices, fresh_tokens = cache_cutfresh(cache_dic, x, current)
             fresh_tokens = self.mlp(modulate(self.norm2(fresh_tokens), shift_mlp, scale_mlp))
-            update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+
+            if cache_dic['smooth_rate'] > 0.0:
+                smooth_update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            else:
+                update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
             
             x = x + gate_mlp.unsqueeze(1) * taylor_formula(cache_dic, current)
             
