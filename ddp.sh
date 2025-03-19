@@ -31,7 +31,6 @@ base_command="torchrun \
     --num-sampling-steps $num_sampling_steps \
     --fresh-ratio $fresh_ratio \
     --ratio-scheduler $ratio_scheduler \
-    --force-fresh $force_fresh \
     --interval $interval \
     --max-order $max_order \
     --soft-fresh-weight $soft_fresh_weight \
@@ -55,17 +54,17 @@ do
     echo "running with smooth_rates: $rate"
     eval $base_command --smooth-rate $rate
 
-    if [ $? -eq 0 ]; then
-        /root/miniconda3/envs/eval/bin/python evaluator.py /home/tiger/Downloads/VIRTUAL_imagenet256_labeled.npz \
-            "/home/tiger/Documents/zhengzx/samples/ToCa-${cluster_nums}-${cluster_method}-${topk}-${rate}.npz"
-    else
-        echo "torchrun failed, skip evaluator.py"
-    fi
+    # if [ $? -eq 0 ]; then
+    #     /root/miniconda3/envs/eval/bin/python evaluator.py /root/autodl-tmp/VIRTUAL_imagenet256_labeled.npz \
+    #         "/root/autodl-tmp/samples/ToCa-${cluster_nums}-${cluster_method}-${topk}-${rate}.npz"
+    # else
+    #     echo "torchrun failed, skip evaluator.py"
+    # fi
 
-    if [ $? -eq 0 ]; then
-        rm -rf "/home/tiger/Documents/zhengzx/samples/ToCa-${cluster_nums}-${cluster_method}-${topk}-${rate}"
-        rm  "/home/tiger/Documents/zhengzx/samples/ToCa-${cluster_nums}-${cluster_method}-${topk}-${rate}.npz"
-    else
-        echo "evaluator.py failed, skip removing files"
-    fi
+    # if [ $? -eq 0 ]; then
+    #     rm -rf "/root/autodl-tmp/samples/ToCa-${cluster_nums}-${cluster_method}-${topk}-${rate}"
+    #     rm  "/root/autodl-tmp/samples/ToCa-${cluster_nums}-${cluster_method}-${topk}-${rate}.npz"
+    # else
+    #     echo "evaluator.py failed, skip removing files"
+    # fi
 done

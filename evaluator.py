@@ -18,7 +18,7 @@ from scipy import linalg
 from tqdm.auto import tqdm
 
 INCEPTION_V3_URL = "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/ref_batches/classify_image_graph_def.pb"
-INCEPTION_V3_PATH = "/root/Documents/zhengzx/samples/classify_image_graph_def.pb"
+INCEPTION_V3_PATH = "/root/autodl-tmp/classify_image_graph_def.pb"
 
 FID_POOL_NAME = "pool_3:0"
 FID_SPATIAL_NAME = "mixed_6/conv:0"
@@ -30,7 +30,7 @@ def main():
     parser.add_argument("sample_batch", help="path to sample batch npz file")
     args = parser.parse_args()
 
-    cluster_nums, cluster_method, topk, smooth_rate = args.sample_batch.split('.npz')[0].split('/')[-1].split('-')[1:5]
+    # cluster_nums, cluster_method, topk, smooth_rate = args.sample_batch.split('.npz')[0].split('/')[-1].split('-')[1:5]
 
     config = tf.ConfigProto(
         allow_soft_placement=True  # allows DecodeJpeg to run on CPU in Inception graph
