@@ -685,7 +685,7 @@ class GaussianDiffusion:
             indices = tqdm(indices)
 
         # Initialization for ToCa     
-        cache_dic, current = cache_init(model_kwargs=model_kwargs, num_steps=self.num_timesteps)
+        cache_dic, current = cache_init(model_kwargs=model_kwargs, num_steps=self.num_timesteps, x=img)
 
         for i in indices:
             t = th.tensor([i] * shape[0], device=device)

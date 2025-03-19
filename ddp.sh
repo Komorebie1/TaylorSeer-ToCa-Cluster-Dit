@@ -50,7 +50,7 @@ smooth_rate=0.007
 for ((i=0;i<1;i++))
 do
     # rate=${momentum_rates[i]}
-    rate=0.007
+    rate=0.0
     echo "running with smooth_rates: $rate"
     eval $base_command --smooth-rate $rate
 

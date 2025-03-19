@@ -122,6 +122,7 @@ class DiTBlock(nn.Module):
 
     def forward(self, x, c, current, cache_dic):
         B, N, C = x.shape  # 获取输入 x 的 shape
+        layer = current['layer']
 
         # FLOPs 初始化
         flops = 0
@@ -149,6 +150,8 @@ class DiTBlock(nn.Module):
             derivative_approximation(cache_dic, current, attn_output)
             x = x + gate_msa.unsqueeze(1) * attn_output
 
+            current['activated_steps'][layer][current['module']] = torch.full((B, N), current['step'], device=x.device)
+
             current['module'] = 'mlp'
             taylor_cache_init(cache_dic, current)
             force_init(cache_dic, current, x)
@@ -157,8 +160,10 @@ class DiTBlock(nn.Module):
             derivative_approximation(cache_dic, current, mlp_output)
             x = x + gate_mlp.unsqueeze(1) * mlp_output
 
-            if current['layer'] == 27:
-                get_cluster_info(x, cache_dic, current)
+            current['activated_steps'][layer][current['module']] = torch.full((B, N), current['step'], device=x.device)
+
+            # if current['layer'] == 27:
+            #     get_cluster_info(x, cache_dic, current)
 
             # MLP FLOPs
             if test_FLOPs:
@@ -166,6 +171,7 @@ class DiTBlock(nn.Module):
                 flops += B * N * C * mlp_hidden_dim * 2 # First projection
                 flops += B * N * mlp_hidden_dim * C * 2# Second projection
                 flops += B * N * mlp_hidden_dim * 6 # GELU activation
+            
 
         elif current['type'] == 'Taylor':
 
@@ -204,12 +210,14 @@ class DiTBlock(nn.Module):
             fresh_indices, fresh_tokens = cache_cutfresh(cache_dic, x, current)
             fresh_tokens = self.mlp(modulate(self.norm2(fresh_tokens), shift_mlp, scale_mlp))
 
-            if cache_dic['smooth_rate'] > 0.0:
-                smooth_update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
-            else:
-                update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            # if cache_dic['smooth_rate'] > 0.0:
+            #     smooth_update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            # else:
+            update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
             
             x = x + gate_mlp.unsqueeze(1) * taylor_formula(cache_dic, current)
+
+            current['activated_steps'][layer][current['module']].scatter_(1, fresh_indices, current['step'])
             
 
             # MLP FLOPs for the 'else' branch
@@ -367,6 +375,8 @@ class DiT(nn.Module):
         for layeridx, block in enumerate(self.blocks):
             current['layer'] = layeridx
             x = block(x, c, current, cache_dic)                      # (N, T, D)
+        # if current['type'] == 'full':
+        #     current['activated_steps'][-1] = current['step']
 
         x = self.final_layer(x, c)                # (N, T, patch_size ** 2 * out_channels)
         x = self.unpatchify(x)                   # (N, out_channels, H, W)

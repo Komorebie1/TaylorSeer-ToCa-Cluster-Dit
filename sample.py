@@ -49,10 +49,10 @@ def main(args, args_exp):
 
     # Labels to condition the model with (feel free to change):
     #class_labels = [207, 360, 387, 974, 88, 979, 417, 279,]
-    class_labels = [985, 130, 987, 130, 292, 289, 339, 385, 293, 397, 974, 814]
+    # class_labels = [985, 130, 987, 130, 292, 289, 339, 385, 293, 397, 974, 814]
     # change ID number 15 to any other ImageNet category ID
     #class_labels = [985]
-    # class_labels = [985]
+    class_labels = [985]
 
 
     # Create sampling noise:
@@ -99,7 +99,7 @@ def main(args, args_exp):
     samples = vae.decode(samples / 0.18215).sample
 
     # Save and display images:
-    save_image(samples, "sample_with_cluster.png", nrow=4, normalize=True, value_range=(-1, 1))
+    save_image(samples, "sample_with_toca_all_order.png", nrow=4, normalize=True, value_range=(-1, 1))
 
 
 if __name__ == "__main__":

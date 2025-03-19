@@ -6,10 +6,26 @@ def update_cache(fresh_indices, fresh_tokens, cache_dic, current, fresh_attn_map
     step = current['step']
     layer = current['layer']
     module = current['module']
-    
+
     indices = fresh_indices
 
     cache_dic['cache'][-1][layer][module][0].scatter_(dim=1, index=indices.unsqueeze(-1).expand(-1, -1, fresh_tokens.shape[-1]), src=fresh_tokens)
+    
+    # updated_cache = {}
+    # updated_cache[0] = fresh_tokens
+    # if fresh_tokens.shape[1] == 0:
+    #     return
+    # difference_distance = torch.full_like(current['activated_steps'][layer][module], step, device=fresh_tokens.device) - current['activated_steps'][layer][module]
+    # fresh_difference_distance = difference_distance.gather(dim=1, index=indices)
+    
+    # for i in range(cache_dic['max_order']):
+    #     if cache_dic['cache'][-1][layer][module].get(i, None) is not None:
+    #         updated_cache[i + 1] = (updated_cache[i] - cache_dic['cache'][-1][layer][module][i].gather(1, indices.unsqueeze(-1).expand(-1, -1, fresh_tokens.shape[-1]))) / fresh_difference_distance.unsqueeze(-1)
+    #     else:
+    #         break
+    # for i in range(cache_dic['max_order']):
+    #     cache_dic['cache'][-1][layer][module][i].scatter_(dim=1, index=indices.unsqueeze(-1).expand(-1, -1, fresh_tokens.shape[-1]), src=updated_cache[i])
+        
 
 def smooth_update_cache(fresh_indices, fresh_tokens, cache_dic, current):
     step = current['step']
@@ -28,7 +44,7 @@ def smooth_update_cache(fresh_indices, fresh_tokens, cache_dic, current):
     fresh_cluster_indices = cluster_indices.gather(dim=1, index=fresh_indices)
 
     sum_per_cluster = torch.zeros((B, cluster_nums, dim), device=device)
-    sum_per_cluster.scatter_add_(
+    sum_per_cluster.scatter_(
         dim=1,
         index=fresh_cluster_indices.unsqueeze(-1).expand(-1, -1, dim),
         src=fresh_tokens.float()

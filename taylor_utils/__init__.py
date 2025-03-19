@@ -8,19 +8,23 @@ def derivative_approximation(cache_dic: Dict, current: Dict, feature: torch.Tens
     :param cache_dic: Cache dictionary.
     :param current: Current step information.
     """
-    difference_distance = current['activated_steps'][-1] - current['activated_steps'][-2]
+    layer, module = current['layer'], current['module']
+    # difference_distance = current['step'] - current['activated_steps'][-1]
+    difference_distance = torch.full_like(current['activated_steps'][layer][module], 
+                                          current['step'], 
+                                          device=current['activated_steps'][layer][module].device) - current['activated_steps'][layer][module]
     # difference_distance = current['activated_times'][-1] - current['activated_times'][-2]
-
     updated_taylor_factors = {}
     updated_taylor_factors[0] = feature
 
     for i in range(cache_dic['max_order']):
-        if (cache_dic['cache'][-1][current['layer']][current['module']].get(i, None) is not None) and (current['step'] < (current['num_steps'] - cache_dic['first_enhance'] + 1)):
-            updated_taylor_factors[i + 1] = (updated_taylor_factors[i] - cache_dic['cache'][-1][current['layer']][current['module']][i]) / difference_distance
+        if (cache_dic['cache'][-1][layer][module].get(i, None) is not None) and (current['step'] < (current['num_steps'] - cache_dic['first_enhance'] + 1)):
+            updated_taylor_factors[i + 1] = (updated_taylor_factors[i] - cache_dic['cache'][-1][layer][module][i]) / difference_distance.unsqueeze(-1)
+            # updated_taylor_factors[i + 1] = (updated_taylor_factors[i] - cache_dic['cache'][-1][layer][module][i]) / difference_distance
         else:
             break
     
-    cache_dic['cache'][-1][current['layer']][current['module']] = updated_taylor_factors
+    cache_dic['cache'][-1][layer][module] = updated_taylor_factors
 
 def taylor_formula(cache_dic: Dict, current: Dict) -> torch.Tensor: 
     """
@@ -28,12 +32,17 @@ def taylor_formula(cache_dic: Dict, current: Dict) -> torch.Tensor:
     :param cache_dic: Cache dictionary.
     :param current: Current step information.
     """
-    x = current['step'] - current['activated_steps'][-1]
+    layer, module = current['layer'], current['module']
+    x = torch.full_like(current['activated_steps'][layer][module]
+                        , current['step'], 
+                        device=current['activated_steps'][layer][module].device) - current['activated_steps'][layer][module]
+    # x = current['step'] - current['activated_steps'][-1]
     # x = current['t'] - current['activated_times'][-1]
     output = 0
 
-    for i in range(len(cache_dic['cache'][-1][current['layer']][current['module']])):
-        output += (1 / math.factorial(i)) * cache_dic['cache'][-1][current['layer']][current['module']][i] * (x ** i)
+    for i in range(len(cache_dic['cache'][-1][layer][module])):
+        # output += (1 / math.factorial(i)) * cache_dic['cache'][-1][layer][module][i] * (x ** i)
+        output += (1 / math.factorial(i)) * cache_dic['cache'][-1][layer][module][i] * (x ** i).unsqueeze(-1)
     
     return output
 

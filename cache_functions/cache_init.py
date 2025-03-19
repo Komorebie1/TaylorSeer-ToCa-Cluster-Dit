@@ -1,4 +1,5 @@
-def cache_init(model_kwargs, num_steps):   
+import torch
+def cache_init(model_kwargs, num_steps, x):   
     '''
     Initialization for cache.
     '''
@@ -20,6 +21,9 @@ def cache_init(model_kwargs, num_steps):
     cache_dic['test_FLOPs']           = model_kwargs['test_FLOPs']
     cache_dic['first_enhance']        = 2
     cache_dic['cache_counter']        = 0
+    current = {}
+    current['num_steps'] = num_steps
+    # current['activated_steps'] = [49]
 
     if (model_kwargs.get('fresh_ratio', None) is None) or (model_kwargs['fresh_ratio'] == 0.0):
     
@@ -38,10 +42,14 @@ def cache_init(model_kwargs, num_steps):
             cache_index[-1][j] = {}
     
         cache_dic['cache_index']          = cache_index
+        current['activated_steps'] = {}
+        B = x.shape[0]
+        for i in range(28):
+            current['activated_steps'][i] = {}
+            current['activated_steps'][i]['mlp'] = torch.full((B, 256), 49, device=x.device)
+            current['activated_steps'][i]['attn'] = torch.full((B, 256), 49, device=x.device)
+
         
-    current = {}
-    current['num_steps'] = num_steps
-    current['activated_steps'] = [49]
 
     for k, v in model_kwargs['exp'].items():
         cache_dic[k] = v
