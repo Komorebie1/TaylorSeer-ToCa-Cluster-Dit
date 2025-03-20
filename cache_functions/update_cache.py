@@ -26,7 +26,10 @@ def update_cache_for_all_order(fresh_indices, fresh_tokens, cache_dic, current, 
             break
 
     for i in range(len(cache_dic['cache'][-1][layer][module])):
-        cache_dic['cache'][-1][layer][module][i].scatter_(dim=1, index=indices.unsqueeze(-1).expand(-1, -1, dim), src=fresh_updated_taylor_factors[i])
+        old_cache = cache_dic['cache'][-1][layer][module][i].gather(1, indices.unsqueeze(-1).expand(-1, -1, dim))
+        rate = 1
+        new_cache = (1 - rate) * old_cache + rate * fresh_updated_taylor_factors[i]
+        cache_dic['cache'][-1][layer][module][i].scatter_(dim=1, index=indices.unsqueeze(-1).expand(-1, -1, dim), src=new_cache)
 
     ## 更新activated_steps（最近一次更新的step）
     current['activated_steps'][layer][current['module']].scatter_(1, fresh_indices, step)
