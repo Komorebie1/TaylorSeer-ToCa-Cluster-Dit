@@ -16,7 +16,7 @@ import math
 #from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
 from timm.models.vision_transformer import PatchEmbed, Mlp
 #import os.path as osp
-from cache_functions import Attention, cal_type, cache_cutfresh, update_cache, smooth_update_cache, force_init
+from cache_functions import Attention, cal_type, cache_cutfresh, update_cache, update_cache_for_all_order, smooth_update_cache, smooth_update_cache_for_all_order, force_init
 from taylor_utils import derivative_approximation, taylor_formula, taylor_cache_init
 from cluster_utils import get_cluster_info
 
@@ -209,15 +209,16 @@ class DiTBlock(nn.Module):
             current['module'] = 'mlp'
             fresh_indices, fresh_tokens = cache_cutfresh(cache_dic, x, current)
             fresh_tokens = self.mlp(modulate(self.norm2(fresh_tokens), shift_mlp, scale_mlp))
-
             # if cache_dic['smooth_rate'] > 0.0:
             #     smooth_update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
             # else:
-            update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
-            
-            x = x + gate_mlp.unsqueeze(1) * taylor_formula(cache_dic, current)
-
-            current['activated_steps'][layer][current['module']].scatter_(1, fresh_indices, current['step'])
+            # smooth_update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            # smooth_update_cache_for_all_order(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            # update_cache(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            update_cache_for_all_order(fresh_indices, fresh_tokens=fresh_tokens, cache_dic=cache_dic, current=current)
+            pred_tokens = taylor_formula(cache_dic, current)
+            # pred_tokens.scatter_(1, fresh_indices.unsqueeze(-1).expand(-1, -1, fresh_tokens.shape[-1]), fresh_tokens)
+            x = x + gate_mlp.unsqueeze(1) * pred_tokens
             
 
             # MLP FLOPs for the 'else' branch

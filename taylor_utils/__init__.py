@@ -8,11 +8,9 @@ def derivative_approximation(cache_dic: Dict, current: Dict, feature: torch.Tens
     :param cache_dic: Cache dictionary.
     :param current: Current step information.
     """
-    layer, module = current['layer'], current['module']
-    # difference_distance = current['step'] - current['activated_steps'][-1]
-    difference_distance = torch.full_like(current['activated_steps'][layer][module], 
-                                          current['step'], 
-                                          device=current['activated_steps'][layer][module].device) - current['activated_steps'][layer][module]
+    layer, module, step = current['layer'], current['module'], current['step']
+    # difference_distance = step - current['activated_steps'][-1]
+    difference_distance = step - current['activated_steps'][layer][module]
     # difference_distance = current['activated_times'][-1] - current['activated_times'][-2]
     updated_taylor_factors = {}
     updated_taylor_factors[0] = feature
@@ -33,9 +31,7 @@ def taylor_formula(cache_dic: Dict, current: Dict) -> torch.Tensor:
     :param current: Current step information.
     """
     layer, module = current['layer'], current['module']
-    x = torch.full_like(current['activated_steps'][layer][module]
-                        , current['step'], 
-                        device=current['activated_steps'][layer][module].device) - current['activated_steps'][layer][module]
+    x = current['step'] - current['activated_steps'][layer][module]
     # x = current['step'] - current['activated_steps'][-1]
     # x = current['t'] - current['activated_times'][-1]
     output = 0
