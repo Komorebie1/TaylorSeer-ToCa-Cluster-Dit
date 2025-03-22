@@ -15,7 +15,7 @@ import numpy as np
 import math
 #from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
 from timm.models.vision_transformer import PatchEmbed, Mlp
-#import os.path as osp
+import os
 from cache_functions import Attention, cal_type, cache_cutfresh, update_cache, update_cache_for_all_order, smooth_update_cache, smooth_update_cache_for_all_order, force_init
 from taylor_utils import derivative_approximation, taylor_formula, taylor_cache_init
 from cluster_utils import get_cluster_info
@@ -366,7 +366,7 @@ class DiT(nn.Module):
         t: (N,) tensor of diffusion timesteps
         y: (N,) tensor of class labels
         """
-
+        self.layer_outputs = []
         x = self.x_embedder(x) + self.pos_embed  # (N, T, D), where T = H * W / patch_size ** 2
         t = self.t_embedder(t)                   # (N, D)
         y = self.y_embedder(y, self.training)    # (N, D)
@@ -376,8 +376,16 @@ class DiT(nn.Module):
         for layeridx, block in enumerate(self.blocks):
             current['layer'] = layeridx
             x = block(x, c, current, cache_dic)                      # (N, T, D)
+            self.layer_outputs.append(x[0].cpu())
         # if current['type'] == 'full':
         #     current['activated_steps'][-1] = current['step']
+
+        current_dir = os.path.join(f'/root/autodl-tmp/DiT_ToCa_max_order_{cache_dic['max_order']}_fresh_ratio_{cache_dic['fresh_ratio']}/', f"step_{current['step']}")
+        os.makedirs(current_dir, exist_ok=True)  # 如果文件夹已存在则不会报错
+        
+        # 保存所有层的输出为一个 pt 文件，按步数保存
+        save_path = os.path.join(current_dir, f"layer_outputs.pt")
+        torch.save(self.layer_outputs, save_path)  # 存储为一个pt文件
 
         x = self.final_layer(x, c)                # (N, T, patch_size ** 2 * out_channels)
         x = self.unpatchify(x)                   # (N, out_channels, H, W)

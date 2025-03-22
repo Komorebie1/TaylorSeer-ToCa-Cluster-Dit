@@ -20,7 +20,7 @@ def cache_cutfresh(cache_dic, tokens, current):
     score = score_evaluate(cache_dic, tokens, current)
     score = local_selection_with_bonus(score, 0.8, 2) # Uniform Spatial Distribution s4 mentioned in toca
     indices = score.argsort(dim=-1, descending=True)
-    topk = int(fresh_ratio * score.shape[1])
+    topk = int(cache_dic['fresh_ratio'] * score.shape[1])
     fresh_indices = indices[:, :topk]
 
     # Updating the Cache Frequency Score s3 mentioned in toca

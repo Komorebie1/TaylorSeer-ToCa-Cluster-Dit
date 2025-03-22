@@ -98,8 +98,11 @@ def main(args, args_exp):
     samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
     samples = vae.decode(samples / 0.18215).sample
 
-    # Save and display images:
-    save_image(samples, "sample_with_toca_all_order.png", nrow=4, normalize=True, value_range=(-1, 1))
+    # dir = f"exp/high_order_ratios/max_order_{args.max_order}"
+    # import os
+    # os.makedirs(dir, exist_ok=True)
+    # # Save and display images:
+    # save_image(samples, f"exp/high_order_ratios/max_order_{args.max_order}/sample_with_random_fresh_ratio_{args.fresh_ratio}.png", nrow=4, normalize=True, value_range=(-1, 1))
 
 
 if __name__ == "__main__":

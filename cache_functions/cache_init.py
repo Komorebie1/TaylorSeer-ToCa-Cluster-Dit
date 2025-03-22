@@ -25,7 +25,7 @@ def cache_init(model_kwargs, num_steps, x):
     current['num_steps'] = num_steps
     # current['activated_steps'] = [49]
 
-    if (model_kwargs.get('fresh_ratio', None) is None) or (model_kwargs['fresh_ratio'] == 0.0):
+    if (model_kwargs.get('fresh_ratio', None) is None):
     
         cache_dic['enable_toca']          = False
     

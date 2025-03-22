@@ -4,8 +4,7 @@ base_command="python sample.py \
     --image-size 256 \
     --num-sampling-steps 50 \
     --interval 4 \
-    --max-order 2 \
-    --fresh-ratio 0.07 \
+    --max-order 4 \
     --ratio-scheduler ToCa-ddim50 \
     --soft-fresh-weight 0.25 \
     --ddim-sample \
@@ -15,4 +14,5 @@ base_command="python sample.py \
     --topk 1 \
     "
 
-eval $base_command
+
+eval $base_command --fresh-ratio 0.0
